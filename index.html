@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嘴替 · 评价工作台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f6f4ef;--surface:#fff;--surface-2:#fbf9f5;
+  --ink:#1d1b18;--ink-2:#5d5750;--ink-3:#948d83;
+  --line:#e8e3d9;--line-2:#d9d2c5;
+  --accent:#b34a2d;--accent-2:#8f3a22;--accent-soft:#faece6;
+  --ok:#2f6b46;--ok-soft:#e9f2ec;--ok-line:#b6d3c1;
+  --bad:#a8392e;--bad-soft:#fbeae8;--bad-line:#e3bcb7;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(29,27,24,.04),0 8px 24px -14px rgba(29,27,24,.16);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6;
+  -webkit-font-smoothing:antialiased;padding:26px 22px 64px;
+}
+button{font:inherit;cursor:pointer;transition:all .15s}
+.wrap{max-width:1140px;margin:0 auto}
+
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.brand h1{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.brand p{font-size:13px;color:var(--ink-3);margin-top:3px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);vertical-align:middle;margin:0 6px 3px 0}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:920px){.grid{grid-template-columns:1fr}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card+.card{margin-top:18px}
+.card-hd{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card-hd .t{font-size:13px;font-weight:600;letter-spacing:.02em}
+.card-bd{padding:16px 18px}
+.hint{font-size:11.5px;color:var(--ink-3);font-weight:400;letter-spacing:0}
+
+.field{margin-bottom:15px}
+.field:last-child{margin-bottom:0}
+.lb{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:baseline}
+
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{font-size:13px;padding:7px 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink-2)}
+.seg button:hover{border-color:var(--ink-3);color:var(--ink)}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+
+.cat-tabs{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.cat-tabs button{font-size:12px;padding:5px 10px;border-radius:7px;border:none;background:transparent;color:var(--ink-3)}
+.cat-tabs button:hover{background:var(--surface-2);color:var(--ink)}
+.cat-tabs button.on{background:var(--ink);color:#fff;font-weight:500}
+
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cats button{
+  padding:10px 4px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface-2);
+  color:var(--ink-2);font-size:13px;line-height:1.3;text-align:center;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis
+}
+.cats button:hover{border-color:var(--ink-3);color:var(--ink)}
+.cats button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:520px){.slots{grid-template-columns:1fr}}
+.slot{position:relative}
+.slot label{display:block;font-size:11.5px;color:var(--ink-3);margin-bottom:4px;padding-left:2px}
+input[type=text],input[type=password]{
+  width:100%;font:inherit;font-size:13.5px;padding:9px 11px;border-radius:9px;
+  border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);outline:none
+}
+input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;padding:5px 11px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink-2);user-select:none}
+.chip:hover{border-color:var(--ink-3)}
+.chip::after{content:"";margin-left:0}
+.chip[data-st="pos"]{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok);font-weight:600}
+.chip[data-st="pos"]::after{content:" +";font-weight:400}
+.chip[data-st="neg"]{background:var(--bad-soft);border-color:var(--bad-line);color:var(--bad);font-weight:600}
+.chip[data-st="neg"]::after{content:" −";font-weight:400}
+
+textarea{
+  width:100%;min-height:120px;font:inherit;font-size:14px;line-height:1.75;padding:12px 14px;
+  border-radius:11px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);
+  resize:vertical;outline:none
+}
+textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+textarea::placeholder{color:var(--ink-3);font-size:13px}
+
+.btn-main{
+  width:100%;font-size:14.5px;font-weight:600;padding:12px;border-radius:11px;border:none;
+  background:var(--accent);color:#fff;margin-top:4px;letter-spacing:.02em
+}
+.btn-main:hover{background:var(--accent-2)}
+.btn-main:disabled{opacity:.55;cursor:default}
+
+.btn-sm{font-size:12.5px;padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);background:#fff;color:var(--ink-2)}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm.ghost{border-color:transparent;background:var(--surface-2)}
+
+.out{
+  min-height:270px;font-size:14.5px;line-height:1.9;white-space:pre-wrap;
+  padding:15px 17px;border-radius:11px;background:var(--surface-2);
+  border:1px solid var(--line);outline:none;color:var(--ink)
+}
+.out:focus{border-color:var(--accent);background:#fff}
+.out:empty::before{content:attr(data-ph);color:var(--ink-3);font-size:13px;line-height:1.8}
+
+.meta{margin-top:10px;font-size:11.5px;color:var(--ink-3);display:flex;gap:12px;flex-wrap:wrap;min-height:16px}
+.meta .tag{background:var(--surface-2);border:1px solid var(--line);padding:2px 8px;border-radius:6px}
+
+.hist-item{
+  padding:9px 11px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);
+  margin-bottom:7px;font-size:12.5px;color:var(--ink-2);cursor:pointer;line-height:1.55;
+  display:flex;gap:8px;align-items:flex-start
+}
+.hist-item:hover{border-color:var(--accent);background:#fff}
+.hist-item .txt{flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hist-item .del{color:var(--ink-3);padding:0 3px;flex:0 0 auto}
+.hist-item .del:hover{color:var(--bad)}
+.empty{font-size:12.5px;color:var(--ink-3);text-align:center;padding:14px 0}
+
+.setting{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:18px}
+.setting.hidden{display:none}
+.setting .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:760px){.setting .row{grid-template-columns:1fr}}
+.setting .note{font-size:11.5px;color:var(--ink-3);margin-top:10px;line-height:1.7}
+.status{font-size:12px;padding:3px 9px;border-radius:6px;display:inline-block}
+.status.off{background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3)}
+.status.on{background:var(--ok-soft);border:1px solid var(--ok-line);color:var(--ok)}
+.qc{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.qc-item{font-size:12px;padding:4px 10px;border-radius:7px;width:fit-content;max-width:100%}
+.qc-item.ok{background:var(--ok-soft);color:var(--ok)}
+.qc-item.bad{background:var(--bad-soft);color:var(--bad)}
+.about{margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.about summary{padding:14px 18px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2);list-style-position:inside}
+.about summary:hover{color:var(--accent)}
+.about-bd{padding:2px 18px 18px;font-size:13px;color:var(--ink-2);line-height:1.9}
+.about-bd h4{font-size:12.5px;margin:14px 0 4px;color:var(--ink)}
+.about-bd code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:12px}
+.about-bd table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}
+.about-bd td,.about-bd th{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.foot{margin-top:26px;text-align:center;font-size:11.5px;color:var(--ink-3);line-height:1.9}
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;font-size:13px;padding:9px 18px;border-radius:9px;opacity:0;pointer-events:none;transition:.22s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>嘴替</h1>
+      <p><span class="dot"></span>消费完只有碎碎念？发出去得是段像样的话</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="status off" id="engineTag">离线模板引擎</span>
+      <button class="btn-sm" id="btnSetting">模型设置</button>
+    </div>
+  </header>
+
+  <div class="setting hidden" id="setting">
+    <div class="row">
+      <div><label class="lb" style="margin-bottom:5px">Base URL</label><input type="text" id="cfgUrl" placeholder="https://api.deepseek.com/v1"></div>
+      <div><label class="lb" style="margin-bottom:5px">API Key</label><input type="password" id="cfgKey" placeholder="sk-..."></div>
+      <div><label class="lb" style="margin-bottom:5px">模型</label><input type="text" id="cfgModel" placeholder="deepseek-chat"></div>
+    </div>
+    <div class="note">
+      Key 只存在这台机器的浏览器本地，不上传。填了就用大模型润色，没填或请求失败自动回落到离线模板引擎，照样出稿。<br>
+      如果浏览器报跨域错误，说明该服务不允许网页直连，点「复制提示词」拿到任意 AI 里跑，再粘回来即可。
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn-sm" id="btnSaveCfg">保存</button>
+      <button class="btn-sm ghost" id="btnCopyPrompt">复制提示词</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="card-bd">
+          <div class="field">
+            <div class="lb">评价对象 <span class="hint" id="catCount"></span></div>
+            <div class="cat-tabs" id="catTabs"></div>
+            <div class="cats" id="cats"></div>
+          </div>
+          <div class="field">
+            <div class="lb">这次整体是</div>
+            <div class="seg" id="tones"></div>
+          </div>
+          <div class="field">
+            <div class="lb">发到哪</div>
+            <div class="seg" id="plats"></div>
+          </div>
+          <div class="field">
+            <div class="lb">篇幅</div>
+            <div class="seg" id="lens"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <span class="t">说点什么</span>
+          <span class="hint">标签点一下＝好，再点＝差</span>
+        </div>
+        <div class="card-bd">
+          <div class="field">
+            <div class="lb">细节 <span class="hint">填了评论才有辨识度</span></div>
+            <div class="slots" id="slots"></div>
+          </div>
+          <div class="field">
+            <div class="lb">印象标签</div>
+            <div class="chips" id="chips"></div>
+          </div>
+          <div class="field">
+            <div class="lb">原始感受 <span class="hint" id="cnt">0 字</span></div>
+            <textarea id="raw"></textarea>
+          </div>
+          <button class="btn-main" id="btnGen">生成评价</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-hd">
+          <span class="t">成稿</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-sm" id="btnCopy">复制</button>
+            <button class="btn-sm" id="btnAgain">换一版</button>
+            <button class="btn-sm" id="btnSave">存下</button>
+          </div>
+        </div>
+        <div class="card-bd">
+          <div class="out" id="out" contenteditable="true" data-ph="生成的评价会出现在这里，可以直接改。改完点「复制」就能发出去。"></div>
+          <div class="meta" id="meta"></div>
+          <div class="qc" id="qc"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <span class="t">最近写过的</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-sm ghost" id="btnExport">导出</button>
+            <button class="btn-sm ghost" id="btnClear">清空</button>
+          </div>
+        </div>
+        <div class="card-bd" id="hist" style="max-height:230px;overflow:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="about">
+    <summary>实现说明 —— 这个工具是怎么做出来的</summary>
+    <div class="about-bd">
+      <h4>它是什么</h4>
+      把消费后的口语碎碎念（"菜挺咸""剪崩了""等了四十分钟"），按品类维度重组、按平台文体包装，输出可直接发布的消费评价。覆盖餐厅、外卖、理发、美甲、酒店、快递等 26 个生活场景。单文件网页，双击即用，数据全部存本地。
+      <h4>核心设计：规则库优先，大模型只负责润色</h4>
+      生成不依赖联网。离线引擎由三层结构组成：
+      <table>
+        <tr><th>层</th><th>内容</th><th>规模</th></tr>
+        <tr><td>品类库</td><td>餐厅、理发、美甲、酒店、快递等生活消费全场景</td><td>26 个品类</td></tr>
+        <tr><td>维度库</td><td>每个品类一套评价维度，每维度带关键词、正/负表达</td><td>130 条</td></tr>
+        <tr><td>文体层</td><td>4 档语气 × 5 种平台文体（点评/小红书/朋友圈/外卖/随手记）</td><td>20 组规则</td></tr>
+      </table>
+      填了 API Key 时走大模型润色（规则库拼装成结构化提示词），失败自动回落离线引擎。
+      <h4>三轮迭代里踩过的坑（比功能本身更值钱）</h4>
+      ① <b>不要按情绪重排用户原句</b>——好评时把正面句往前挪，会把"我说要狼尾，结果剪成学生头"的因果关系打断。结论：保留用户叙述顺序，定调交给开头结尾。<br>
+      ② <b>定调要与内容对齐</b>——选"好评"但正文全是坏话时，开头自动降级为中性表述，不自相矛盾。<br>
+      ③ <b>短输入不能套三段式</b>——原文只有"还可以"时，开头/正文/收尾每段都只剩几个字，拼起来是碎块。改走融合模式，整句一气呵成。
+      <h4>自检清单（生成后自动跑）</h4>
+      方法论固化成代码：套话检测、感叹号配额、字数区间、<b>数字事实越界</b>（正文出现原文没有的金额/时长即标记，防止 AI 编造）、语气一致性。
+      <h4>导出</h4>
+      <button class="btn-sm" id="btnDims">导出维度库 CSV（26 品类 / 130 条）</button>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:8px">CSV 可直接导入飞书多维表格 / Excel，作为数据库层的结构化源文件。</div>
+    </div>
+  </details>
+
+  <div class="foot">离线模板引擎永远可用 · 大模型只负责把话写活 · 内容存本地不联网</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const GROUPS = ['吃喝','生活服务','买买买','出行住宿','更多'];
+
+const CATS = {
+restaurant:{g:'吃喝',n:'餐厅',s:'店名',i:'点了什么',ph:'鲈鱼很嫩，但汤太咸了。服务员态度不错，就是等位等了四十分钟',tag:'#探店 #餐厅推荐 #吃货日常',d:[
+ ['口味','咸 淡 好吃 难吃 香 腥 柴 嫩 鲜 油 入味 火候 味道 口感 辣','菜的味道是稳的，火候拿得住','调味不太稳，咸淡和火候都差点意思'],
+ ['分量','分量 量 少 足 精致 袖珍 吃饱 不够','分量给得实在，两个人点三个菜就够','分量偏少，盘子挺大东西不多'],
+ ['环境','环境 装修 座位 吵 干净 拥挤 氛围 灯光 卫生 桌子 空调','环境干净，坐下来是舒服的','环境一般，桌距太近，说话得压着音量'],
+ ['服务','态度 服务员 催 上菜 耐心 冷漠 热情 叫号 点单 加水','服务是加分项，招呼得及时也不打扰','服务明显跟不上，叫了几次才有人过来'],
+ ['价格','贵 值 便宜 实惠 坑 价格 性价比 人均 账单','价格对得起出品','这个出品配这个价，性价比一般'],
+ ['等位','排队 等位 等 慢 久 超时 出餐 半小时 分钟 一小时','上菜节奏不错，没等太久','等位等太久，等到上桌情绪已经没了']
+]},
+takeout:{g:'吃喝',n:'外卖',s:'店名',i:'点了什么',ph:'汤洒了一半，米饭是凉的，不过肉给得还挺多',tag:'#外卖 #外卖测评 #干饭',d:[
+ ['包装','包装 洒 漏 封口 餐盒 袋 汤 汁','包装做得扎实，一路颠过来没洒','包装不太行，汤汁漏了半个袋子'],
+ ['温度','凉了 温度 热 冷 冰 温','送到还是热的，这点挺难得','到手已经凉透了'],
+ ['分量','分量 量 少 足 够 不够','分量给得实在','分量偏少，不太够一个人吃'],
+ ['口味','咸 淡 好吃 难吃 味道 口感 油 嫩 鲜','味道做得不错，不像随便应付的','调味一般，油也偏重'],
+ ['配送','配送 骑手 快 慢 超时 时间 分钟 迟到 送达','骑手送得快，也没乱放','送得太慢，超时了快半小时'],
+ ['性价比','贵 值 便宜 实惠 价格 性价比','这个价位能吃到这样很划算','价格和分量对不上，不太值']
+]},
+cafe:{g:'吃喝',n:'咖啡茶饮',s:'店名',i:'点的是什么',ph:'拿铁奶泡太稀，咖啡味也淡，环境倒是挺舒服的',tag:'#咖啡 #探店 #咖啡因续命',d:[
+ ['出品','咖啡 豆 萃取 奶泡 苦 酸 涩 风味 茶底 淡 浓','出品在线，风味层次清楚','出品不太行，喝不出该有的风味'],
+ ['甜度冰量','甜 糖 冰 量 去冰 少糖 半糖 三分','甜度冰量都按备注做了','备注了少糖去冰，到手还是又甜又冰'],
+ ['环境','环境 座位 安静 插座 干净 吵 空间 装修','环境安静，适合坐着待一下午','环境一般，座位少又吵'],
+ ['服务','态度 店员 耐心 热情 点单 催 出杯','店员态度挺好，出杯也快','服务有点敷衍，问两句就不耐烦'],
+ ['价格','贵 值 便宜 价格 性价比 杯','价格对得起出品','这个价格配这个品质，有点撑不住']
+]},
+hotpot:{g:'吃喝',n:'火锅烧烤',s:'店名',i:'点了什么',ph:'毛肚很新鲜，锅底够味，就是油烟大、加汤要叫三次',tag:'#火锅 #烧烤 #探店',d:[
+ ['锅底','锅底 辣 麻 香 咸 油 汤底 味 牛油','锅底够味，越煮越香','锅底偏咸，煮到后面齁得慌'],
+ ['食材','鲜 毛肚 牛肉 食材 解冻 摆盘 新鲜 嫩 老','食材新鲜，处理得也干净','食材一般，有几样明显不新鲜'],
+ ['分量','分量 量 少 足 盘 不够','分量给得足，吃得挺痛快','分量偏少，摆盘好看但不经吃'],
+ ['环境','环境 油烟 吵 味道 座位 排风 干净 空调','排风做得不错，吃完身上没什么味','油烟太大，吃完一身味道'],
+ ['服务','态度 服务员 加汤 催 换盘 拿 收盘','服务跟得上，加汤换盘都主动','服务跟不上，加个汤要叫三次'],
+ ['价格','贵 值 价格 性价比 人均 账单','人均这个价，吃得挺满足','人均不低，但吃到的品质配不上']
+]},
+buffet:{g:'吃喝',n:'自助餐',s:'店名',i:'主打什么',ph:'海鲜补货很慢，取餐区有点乱，但甜点做得不错',tag:'#自助餐 #探店 #扶墙出',d:[
+ ['品类','品类 种类 齐全 选择 少 海鲜','品类挺全，能挑的不少','品类看着多，实际能吃的没几样'],
+ ['新鲜度','新鲜 不新鲜 补 空 凉 摆 久','补餐及时，基本没见到空盘','补货太慢，热门菜一空就是半小时'],
+ ['口味','好吃 难吃 味道 咸 淡 口感 油','有几道菜做得比单点店还认真','味道普遍一般，像是提前做好放着'],
+ ['环境','环境 干净 吵 挤 座位 取餐 排队 卫生','取餐区动线顺，不挤','取餐区太乱，人也挤'],
+ ['价格','贵 值 便宜 价格 性价比 人均','这个价位吃到这些，算划算','价格偏高，不太值'],
+ ['服务','态度 服务员 收盘 催 收拾','收盘很勤，桌子一直干净','收盘不及时，桌上堆了一堆盘子']
+]},
+bar:{g:'吃喝',n:'酒吧酒馆',s:'店名',i:'点了什么',ph:'特调很有想法，音乐不吵，就是上酒太慢',tag:'#酒吧 #探店 #微醺',d:[
+ ['酒水','酒 调酒 特调 口感 好喝 难喝 兑水 烈 淡','特调有想法，平衡做得不错','酒水偏淡，喝着像兑了很多水'],
+ ['氛围','氛围 音乐 灯光 吵 安静 座位 空间','氛围刚好，音乐不吵也不闷','音乐太吵，聊天基本靠喊'],
+ ['服务','态度 调酒师 服务员 上酒 慢 招呼','调酒师会聊两句，节奏舒服','上酒太慢，催了两次'],
+ ['价格','贵 值 价格 性价比 低消 一杯','价格在这个地段算合理','一杯这个价，酒体撑不起']
+]},
+barber:{g:'生活服务',n:'理发',s:'店名',i:'想剪什么',ph:'我说要狼尾，结果剪成学生头，全程还在推销办卡',tag:'#发型 #理发店推荐 #剪发',d:[
+ ['技术','剪 层次 打薄 刘海 烫 染 塌 崩 手艺 还原 长度 修剪','手上是有活的，剪出来的型能立住','技术不太稳，想要的形状没做出来'],
+ ['沟通','听懂 理解 沟通 我说 建议 擅自 开始 商量','会先问清楚想要什么，也给了靠谱建议','基本没听我说，自己按想法剪了'],
+ ['推销','办卡 充值 推销 产品 套餐 加项目 会员','全程没推销，这点很难得','一路推销办卡，剪头发反而成了顺带的'],
+ ['环境','干净 卫生 工具 洗头 水温 椅 环境','店里干净，洗头水温也合适','工具看着不太干净，洗头水温忽冷忽热'],
+ ['价格','贵 值 明码 加价 隐藏 价格 收费','价格明码标价，没有额外加项','结账时多了几项没提前说的费用']
+]},
+nail:{g:'生活服务',n:'美甲美睫',s:'店名',i:'做了什么款式',ph:'图发过去还原得挺好，就是一星期就起翘了',tag:'#美甲 #美甲分享 #美睫',d:[
+ ['还原度','还原 图片 色差 一模一样 做出来 走样 款式 颜色','照着图做的，还原度很高','做出来和图片差得有点远，颜色也不对'],
+ ['卫生','消毒 工具 一次性 干净 共用 搓条 卫生','工具是消毒过的，一次性用品也齐','工具看着是共用的，没见消毒'],
+ ['持久度','掉 起翘 脱落 一周 半个月 持久 裂 掉色','撑了快一个月，边缘都没起翘','一个星期就开始起翘，两个掉了三个'],
+ ['服务','态度 温柔 耐心 沟通 聊天 推荐 修','过程中会一直问感受，很耐心','全程低头做，问什么都不太理'],
+ ['价格','贵 值 加价 隐形消费 价格 收费 卸甲','价格和做之前说的一致','结账多了卸甲和加固的钱，之前没提']
+]},
+beauty:{g:'生活服务',n:'美容医美',s:'机构',i:'做了什么项目',ph:'做完痘印确实淡了，但过程中一直在推年卡',tag:'#美容 #医美 #护肤',d:[
+ ['效果','效果 明显 看得见 变化 痘 毛孔 淡 改善 白','做完是能看出变化的','做完和做之前差别不大'],
+ ['专业','专业 方案 建议 仪器 操作 手法 判断 皮肤','会先看皮肤状态再定方案，讲得清楚','方案张口就来，也没怎么看我的皮肤'],
+ ['推销','推销 办卡 加项目 套餐 充值 年卡 疗程','全程没硬推，这点让人舒服','一直在推年卡和加项，压力很大'],
+ ['环境','环境 干净 卫生 私密 房间 床 消毒','房间干净私密，躺着很放松','环境一般，房间隔音差'],
+ ['价格','贵 值 价格 隐形消费 收费 明细','价格说清楚了才做，没有加项','做完才知道有几项单独收费']
+]},
+spa:{g:'生活服务',n:'按摩足疗',s:'店名',i:'做了什么项目',ph:'手法很到位，肩颈那块按开了，就是房间有点吵',tag:'#按摩 #足疗 #SPA',d:[
+ ['手法','手法 力度 专业 按到位 疼 舒服 松 肩颈','力度问得很细，按完确实松了','手法一般，按了半天没找到点'],
+ ['环境','环境 干净 安静 灯光 房间 卫生 隔音','房间安静，灯光也调得舒服','隔壁说话听得一清二楚，根本静不下来'],
+ ['服务','态度 技师 服务 耐心 推销 催 时间','技师话不多，节奏刚好','一直在推销加钟和套餐'],
+ ['价格','贵 值 价格 性价比 时长 收费','这个时长配这个价，合理','时间明显缩水，价却没少收']
+]},
+gym:{g:'生活服务',n:'健身私教',s:'场馆',i:'买了什么课',ph:'器械挺全，但私教一直拉着我上体验课',tag:'#健身 #私教 #健身房',d:[
+ ['器械','器械 齐全 老旧 维护 设备 坏 哑铃 跑步机','器械挺全，维护得也还行','好几台器械是坏的，一直没修'],
+ ['教练','教练 专业 指导 私教 推销 纠正 动作','教练会主动纠正动作，不推销','教练全程在卖课，动作反而没人管'],
+ ['环境','环境 干净 通风 拥挤 洗澡 更衣 空调','环境干净，洗澡水也够热','人多到器械要排队，更衣室味道重'],
+ ['价格','贵 值 年卡 价格 性价比 课时','年卡价格算下来不算贵','课时费偏高，性价比一般']
+]},
+pet:{g:'生活服务',n:'宠物',s:'店名',i:'做了什么',ph:'洗澡剪毛很细心，猫回来一点不紧张，就是价格偏高',tag:'#宠物 #宠物医院 #铲屎官',d:[
+ ['专业','专业 诊断 技术 医生 判断 处理 疫苗','医生判断得准，也讲得明白','处理有点草率，问什么都含糊'],
+ ['服务','态度 耐心 沟通 解释 温柔 安抚','对猫很有耐心，全程在安抚','态度冷淡，问细节也不太愿意答'],
+ ['价格','贵 值 价格 收费 乱 明细','收费明细清楚，没乱加项','价格偏高，而且加项没提前说'],
+ ['环境','环境 干净 卫生 气味 笼子 消毒 空间','店里没异味，笼子也是干净的','一进门味道很重，笼子看着没清理'],
+ ['效果','效果 洗完 造型 恢复 精神','洗完吹得很干，造型也清爽','洗完还是潮的，回家还打喷嚏']
+]},
+car:{g:'生活服务',n:'洗车修车',s:'门店',i:'做了什么',ph:'洗得挺干净，但结账时多了个没提过的项目',tag:'#洗车 #修车 #汽车保养',d:[
+ ['技术','技术 手艺 修好 问题 判断 洗 干净 划痕','问题找得准，修完确实好了','没找到根本原因，修完还是有'],
+ ['价格','贵 值 明码 乱收费 价格 套路 加项','报价说多少就是多少','结账莫名多了两项'],
+ ['服务','态度 沟通 解释 耐心 接待','会讲清楚哪里有问题，为什么换','问什么都说不清楚，只顾着报价'],
+ ['效率','快 慢 时间 等 多久 当天','当天就弄完了，没耽误事','说好两小时，等了一整天'],
+ ['透明','透明 报价 明细 隐瞒 提前 告知','换什么件都提前拍了照给我看','有些项目做完才说，事先完全没提']
+]},
+clean:{g:'生活服务',n:'家政搬家',s:'平台/公司',i:'做了什么服务',ph:'阿姨很仔细，厨房油污都擦了，就是迟到了半小时',tag:'#家政 #保洁 #搬家',d:[
+ ['干净度','干净 细致 角落 做到位 油污 灰 擦','角角落落都擦到了，比预期干净','表面擦了，柜子后面和缝隙都没动'],
+ ['守时','准时 迟到 时间 约 等 提前','准时到，还提前问了需求','约的九点，十点才到，也没提前说'],
+ ['态度','态度 沟通 耐心 专业 认真 负责','做事认真，中途还主动说了哪些地方难处理','全程在赶时间，问什么都敷衍'],
+ ['价格','贵 值 价格 加价 隐形 收费 小时','价格和下单时说的一致','现场临时加价，说面积比预估大']
+]},
+apparel:{g:'买买买',n:'服装鞋包',s:'店铺/品牌',i:'买了什么',ph:'版型挺显瘦，但面料比图里薄，尺码也偏小一号',tag:'#穿搭 #好物分享 #购物分享',d:[
+ ['版型','版型 显瘦 宽 紧 肩线 长度 垂感 上身 剪裁','版型很好，上身比挂着好看','版型和图差挺多，上身显臃肿'],
+ ['面料','面料 料子 薄 厚 起球 掉色 扎 透气 手感','面料手感不错，也不闷','面料偏薄，和图片质感差很远'],
+ ['尺码','尺码 偏大 偏小 标准 尺码表 建议 码','按尺码表买的，刚好合身','尺码偏小，建议往大一码买'],
+ ['做工','线头 走线 做工 细节 拉链 扣子 缝','走线干净，细节处理得不错','线头不少，拉链也不太顺'],
+ ['售后','退换 客服 发货 物流 退款 态度 换货','客服回复很快，退换也痛快','客服基本是机器人复读，问题没解决'],
+ ['价格','贵 值 便宜 性价比 价格 折扣','这个价格买到这样的品质，值','原价买的话不太值，等打折吧']
+]},
+skincare:{g:'买买买',n:'美妆护肤',s:'品牌/店铺',i:'买了什么',ph:'吸收快不黏，但味道有点冲，包装泵头也不好按',tag:'#护肤 #美妆 #空瓶记',d:[
+ ['效果','效果 吸收 保湿 油腻 闷痘 过敏 泛红 干','用了一周，保湿是真的能感觉到','用了两天就泛红，只能停用'],
+ ['质地','质地 清爽 厚重 搓泥 味道 香 黏 流动性','质地清爽，上脸不搓泥','质地偏厚，叠涂容易搓泥'],
+ ['包装','包装 设计 泵头 漏 旅行 便携 瓶','包装做得好，泵头按着很顺','泵头很难按，出门也不方便带'],
+ ['价格','贵 值 价格 性价比 容量 毫升','这个容量配这个价，算合理','价格偏高，用量还费'],
+ ['正品','正品 防伪 客服 发货 物流 批次','包装和防伪都对得上，是正品','收到货包装有拆封痕迹，客服也没解释']
+]},
+digital:{g:'买买买',n:'数码家电',s:'品牌/店铺',i:'买了什么',ph:'性能没得说，但续航比宣传的短，包装也磕了一个角',tag:'#数码 #家电 #开箱',d:[
+ ['性能','性能 流畅 卡顿 发热 速度 运行 帧','性能很稳，重度用也不卡','用一会儿就发热，还开始掉帧'],
+ ['做工','做工 质感 手感 屏幕 缝隙 材质 重量','做工扎实，手感也对得起价位','边框缝隙不均，做工一般'],
+ ['续航','续航 掉电 充电 速度 电池 待机','续航比预期好，一天下来还有富余','续航虚标，实际用不到宣传的一半'],
+ ['售后','安装 售后 客服 保修 退换 上门','安装师傅很专业，也没多收钱','售后电话打不通，来回推'],
+ ['价格','贵 值 价格 性价比 促销','这个配置配这个价，划算','价格偏高，同配置有更便宜的']
+]},
+grocery:{g:'买买买',n:'生鲜超市',s:'门店/平台',i:'买了什么',ph:'菜挺新鲜，就是称重排队太久，收银只开了一个口',tag:'#生鲜 #超市 #买菜',d:[
+ ['新鲜度','新鲜 坏 烂 蔫 不新鲜 保质期 日期','菜是新鲜的，叶子还挺挺的','有几样已经蔫了，还有一盒过了保质期'],
+ ['价格','贵 值 便宜 价格 称重 标签','价格比菜市场还便宜点','称重价和标价对不上'],
+ ['品类','品类 齐全 缺货 选择 断货','品类挺全，想买的都找得到','好几样断货，替代品也不多'],
+ ['配送','配送 快 慢 送达 时间 骑手 超时','送得很快，包装也没压坏','送晚了两个小时，也没提前通知'],
+ ['服务','态度 收银 称重 排队 工作人员','工作人员会主动帮忙找货','收银只开一个口，排队排很久']
+]},
+furniture:{g:'买买买',n:'家居家具',s:'店铺/品牌',i:'买了什么',ph:'实物比图片颜色深，安装师傅很利索，就是有块板磕了',tag:'#家居 #家具 #装修',d:[
+ ['质量','质量 结实 板材 五金 晃 稳固 味道 甲醛','装好很稳，五金也不松','用两天就开始晃，板材也薄'],
+ ['安装','安装 师傅 上门 组装 准时 专业 收费','师傅上门很准时，装得也利索','安装要另外收费，下单时没写'],
+ ['尺寸色差','尺寸 大小 实物 图片 色差 深浅 高度','尺寸和页面写得一样，放进去刚好','实物比图片深不少，颜色差很远'],
+ ['售后','售后 客服 退换 补发 破损 磕','反馈破损当天就安排了补发','售后一直让我自己找物流']
+]},
+hotel:{g:'出行住宿',n:'酒店民宿',s:'酒店名',i:'住的房型',ph:'房间干净，隔音一般，半夜走廊说话听得很清楚',tag:'#酒店 #民宿 #旅行住宿',d:[
+ ['房间','房间 大小 干净 床品 隔音 空间 采光 床','房间比照片看着还宽敞，床也舒服','房间很小，行李箱打开就没地方站'],
+ ['卫生','卫生 毛巾 床单 异味 虫 浴室 霉','床单毛巾都是干净的，没有异味','浴室角落有霉点，毛巾也有味道'],
+ ['位置','位置 交通 地铁 方便 周边 打车 停车','出门就是地铁，去哪都方便','位置偏，晚上打车不太好叫'],
+ ['服务','态度 前台 办理 入住 热情 寄存','前台办入住很快，也帮忙存了行李','前台态度冷，问什么都一句不清楚'],
+ ['设施','设施 热水 空调 网络 wifi 水压 电梯','热水很足，网速也稳定','热水忽冷忽热，网还老断'],
+ ['价格','贵 值 价格 性价比 押金 房费','这个位置这个价，算划算','房费不低，还要另收押金和清洁费']
+]},
+ride:{g:'出行住宿',n:'网约车出租',s:'平台',i:'起点到终点',ph:'车很干净，师傅也客气，就是绕了一段路',tag:'#网约车 #出行 #打车',d:[
+ ['准时','准时 等 迟到 接单 快 慢 几分钟','接单很快，两分钟就到了','等了快二十分钟才接单'],
+ ['车况','车况 干净 味道 空调 卫生 座位 旧','车里很干净，也没有异味','车里有味道，座椅也不太干净'],
+ ['司机','司机 态度 绕路 沟通 礼貌 聊天 客气','师傅话不多，路线也走得顺','中途绕了一段，也没解释'],
+ ['价格','贵 加价 绕路 价格 收费 预估 打表','价格和预估价基本一致','最后比预估价贵了不少'],
+ ['安全','安全 驾驶 急刹 超速 平稳 稳','开得很稳，全程没急刹','一路急刹加变道，坐得心惊']
+]},
+travel:{g:'出行住宿',n:'景区旅游',s:'景区/项目',i:'玩的项目',ph:'风景是真好，但排队两小时，厕所也少得可怜',tag:'#旅行 #景区 #出片',d:[
+ ['风景','风景 好看 值得 拍照 出片 美 视野','风景确实值得跑一趟，随手拍都好看','景色一般，和宣传图差太远'],
+ ['人流','人流 拥挤 排队 人多 挤 两小时 小时','人不算多，逛起来很松快','排队排了两个小时，进去只玩了十分钟'],
+ ['设施','设施 厕所 指示牌 休息区 遮阳 停车 检票','指示牌清楚，厕所也够用','厕所太少，还不太干净'],
+ ['价格','门票 贵 值 价格 性价比 收费 二次消费','门票价格对得起内容','门票不便宜，里面还样样另收费'],
+ ['服务','服务 工作人员 态度 讲解 引导 帮忙','工作人员挺热情，问路都会带一段','工作人员基本不管事，问什么都摆手']
+]},
+express:{g:'更多',n:'快递物流',s:'快递公司',i:'寄/收什么',ph:'速度挺快，但箱子被压扁了，里面东西磕了个角',tag:'#快递 #物流 #开箱',d:[
+ ['速度','速度 快 慢 送达 时间 天 派送','速度比预期还快一天','同城件走了四天'],
+ ['包装','包装 破损 挤压 摔 压扁 湿 拆','包装完好，里面也没磕碰','箱子明显被压过，里面东西磕坏了'],
+ ['服务','态度 送货上门 驿站 电话 通知 快递员','会提前打电话，也送上了门','直接扔驿站，电话都没打'],
+ ['价格','贵 值 运费 价格 收费 续重','运费不贵，续重也算合理','运费比别家贵一截']
+]},
+telecom:{g:'更多',n:'通信宽带',s:'运营商',i:'办的什么套餐',ph:'网速还行，但客服永远在转接，报修等了三天',tag:'#宽带 #运营商 #避坑',d:[
+ ['网速','网速 快 慢 卡 断 掉线 带宽 稳定','网速稳定，看4K不卡','晚上一到高峰就掉速'],
+ ['稳定','断网 掉线 稳定 重启 光猫','用了一个月没断过','一天断好几次，重启也没用'],
+ ['客服','客服 态度 转接 解决 回复 推','客服一次就说清楚了','转接了四五个部门，问题还是没解决'],
+ ['资费','资费 贵 套餐 价格 隐形 扣费 增值','资费写得清楚，没有乱扣','莫名其妙多了几项增值服务'],
+ ['安装','安装 报修 上门 师傅 准时 快','师傅第二天就上门了','报修三天没人来']
+]},
+bank:{g:'更多',n:'银行保险',s:'机构',i:'办了什么业务',ph:'业务办得挺顺，就是排队等了一个多小时，只开了两个窗口',tag:'#银行 #保险 #办事',d:[
+ ['效率','效率 快 慢 排队 窗口 等 小时 叫号','办得挺快，十分钟就结束了','排了一个多小时，只开了两个窗口'],
+ ['态度','态度 工作人员 耐心 解释 冷漠 专业','柜员讲得很细，不懂的地方也重复了一遍','问两句就不耐烦了'],
+ ['收费','收费 手续费 费用 扣费 明细 年费','费用提前说清楚了','收了几笔没解释的费用'],
+ ['流程','流程 手续 材料 复杂 简单 一次 跑','一次就办完了，材料也没多要','跑了三趟，每次都说缺一份材料'],
+ ['产品','产品 收益 条款 保险 理财 风险 说明','条款讲得清楚，也提示了风险','只讲收益不讲风险']
+]},
+hospital:{g:'更多',n:'医院牙科',s:'医院/诊所',i:'看的什么',ph:'医生解释得很清楚，就是挂号太难，等了三个小时',tag:'#看牙 #就医 #体检',d:[
+ ['专业','专业 诊断 技术 医生 判断 治疗 方案','医生判断得准，方案也讲得清楚','看得比较草率，问什么都含糊'],
+ ['沟通','解释 耐心 沟通 态度 讲 说明','会拿片子一点点讲给我听','三句话就打发出来了'],
+ ['等待','等待 排队 挂号 时间 小时 难 号','候诊没等太久，流程也顺','挂号挂了一周，候诊又等了三个小时'],
+ ['价格','贵 价格 收费 明细 医保 报销 自费','每项费用都提前说了','做完才知道有几项要自费'],
+ ['环境','环境 干净 卫生 设备 消毒 诊室','诊室干净，器械都是当着我面拆的','环境一般，器械消毒看着不太规范']
+]}
+};
+
+const SCENE = {restaurant:'这顿',takeout:'这次点单',cafe:'这杯',hotpot:'这顿',buffet:'这顿',bar:'这次',
+barber:'这次剪',nail:'这次做',beauty:'这次做',spa:'这次按',gym:'这段时间练',pet:'这次',car:'这次',
+clean:'这次',apparel:'这件',skincare:'这瓶',digital:'这个',grocery:'这次',furniture:'这套',
+hotel:'这两晚',ride:'这趟',travel:'这趟',express:'这次',telecom:'这个套餐',bank:'这次',hospital:'这次'};
+
+const VERB = {restaurant:'点的是',takeout:'点的是',cafe:'点的是',hotpot:'点的是',buffet:'主打的',bar:'点的是',
+barber:'想做的是',nail:'做的是',beauty:'做的是',spa:'做的是',gym:'买的是',pet:'做的是',car:'做的是',clean:'约的是',
+apparel:'买的是',skincare:'买的是',digital:'买的是',grocery:'买的是',furniture:'买的是',
+hotel:'住的是',ride:'路线是',travel:'玩的是',express:'寄的是',telecom:'办的是',bank:'办的是',hospital:'看的是'};
+
+const TONES = [['praise','好评'],['mixed','中评'],['negative','差评'],['ironic','五星吐槽']];
+const PLATS = [['dianping','大众点评'],['xhs','小红书'],['moments','朋友圈'],['takeout','外卖评价'],['plain','随手记']];
+const LENS = [['short','短'],['mid','中'],['long','长']];
+
+const TONE_DESC = {
+  praise:'真诚好评，像朋友推荐，具体但不夸张，不要全是溢美之词',
+  mixed:'客观中评，优缺点都讲，语气平淡，结尾给出是否推荐',
+  negative:'差评，把具体问题说清楚，克制不谩骂，指出可改进的地方',
+  ironic:'五星但正文吐槽，表面在夸、实际在敲打，带点自嘲和幽默'
+};
+const PLAT_DESC = {
+  dianping:'大众点评长评，客观详实，有细节有结论，分段自然',
+  xhs:'小红书笔记，第一人称带情绪，口语化，结尾带两三个话题标签',
+  moments:'朋友圈，短、随口、不刻意，不写话题标签',
+  takeout:'外卖平台短评，聚焦出餐速度、包装、温度、配送',
+  plain:'不限平台的自然评价'
+};
+const LEN_N = {short:80, mid:180, long:350};
+
+const NEG = '太咸 太淡 难吃 不新鲜 腥 柴 油腻 贵 坑 慢 冷漠 爱搭不理 不耐烦 推销 办卡 不值 崩 走样 色差 起翘 脱落 扎 起球 掉色 偏大 偏小 超时 凉了 脏 吵 挤 失望 踩雷 翻车 不推荐 别去 糟糕 敷衍 洒 漏 破损 投诉 硬 干 假 老 坏 烂 蔫 缺 没 半天 加价 隐形 套路 虚标 掉线 断网 乱收费 缩水 迟到 压扁'.split(' ');
+const POS = '好吃 嫩 鲜 香 入味 不错 挺好 满意 推荐 热情 耐心 干净 实惠 值 舒服 喜欢 好看 还原 持久 显瘦 垂感 好评 会再来 细心 专业 快 方便 贴心 划算 惊喜 稳 实在 礼貌 准 清楚 到位 细致 划算 新鲜 通畅'.split(' ');
+const SOFT_OK = /不错|不贵|不吵|不难吃|不腻|不油|不乱|没乱|不渗/;
+const TURN = /(?:但|但是|就是|不过|可惜|然而|只是|唯一)(.*)$/;
+
+const $ = s => document.querySelector(s);
+const S = {group:'吃喝', cat:'restaurant', tone:'praise', platform:'dianping', len:'mid', chips:{}};
+let seed = Math.floor(Math.random() * 99999);
+
+function pick(arr){
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return arr[seed % arr.length];
+}
+function dimsOf(k){ return CATS[k].d.map(a => ({n:a[0], k:a[1].split(' '), p:a[2], q:a[3]})); }
+function slotVal(i){ const el = document.querySelector('#slot'+i); return el ? el.value.trim() : ''; }
+
+function renderTabs(){
+  $('#catTabs').innerHTML = GROUPS.map(g =>
+    `<button data-g="${g}" class="${g===S.group?'on':''}">${g}</button>`).join('');
+}
+function renderCats(){
+  const keys = Object.keys(CATS).filter(k => CATS[k].g === S.group);
+  $('#cats').innerHTML = keys.map(k =>
+    `<button data-c="${k}" class="${k===S.cat?'on':''}" title="${CATS[k].n}">${CATS[k].n}</button>`).join('');
+  $('#catCount').textContent = Object.keys(CATS).length + ' 个品类';
+}
+function renderSeg(id, list, cur, key){
+  $(id).innerHTML = list.map(([v,label]) =>
+    `<button data-v="${v}" class="${v===cur?'on':''}">${label}</button>`).join('');
+}
+function renderSlots(){
+  const c = CATS[S.cat];
+  $('#slots').innerHTML = `
+    <div class="slot"><label>${c.s}</label><input type="text" id="slot0" placeholder="不填也行"></div>
+    <div class="slot"><label>${c.i}</label><input type="text" id="slot1" placeholder="具体的才像真的"></div>`;
+  $('#raw').placeholder = '例如：' + c.ph;
+}
+function renderChips(){
+  const dims = dimsOf(S.cat);
+  $('#chips').innerHTML = dims.map(d => {
+    const st = S.chips[d.n];
+    return `<span class="chip" data-d="${d.n}" data-st="${st===1?'pos':st===-1?'neg':''}">${d.n}</span>`;
+  }).join('');
+}
+
+function syncStatus(){
+  const cfg = loadCfg();
+  const el = $('#engineTag');
+  if(cfg.key){ el.textContent = '大模型 · ' + (cfg.model || '已连接'); el.className = 'status on'; }
+  else { el.textContent = '离线模板引擎'; el.className = 'status off'; }
+}
+
+function polarityOf(t){
+  let s = t;
+  const m = t.match(TURN);
+  if(m) s = m[1];
+  if(SOFT_OK.test(s)) return 1;
+  if(NEG.some(w => s.includes(w))) return -1;
+  if(POS.some(w => s.includes(w))) return 1;
+  return 0;
+}
+function matchDim(t, dims){
+  for(const d of dims){ if(d.k.some(k => t.includes(k))) return d.n; }
+  return null;
+}
+function splitClauses(raw){
+  const parts = raw.split(/[。！？!?；;\n]+/).map(s => s.trim()).filter(s => s.length > 1);
+  const out = [];
+  for(const p of parts){
+    if(out.length && /^(但|但是|不过|就是|可惜|只是|结果)/.test(p)){
+      out[out.length - 1] += '，' + p;
+    } else {
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+function joinItems(item){
+  const parts = item.split(/[，,、;；\s]+/).filter(Boolean);
+  if(parts.length <= 1) return item.trim();
+  return parts.slice(0, -1).join('、') + '和' + parts[parts.length - 1];
+}
+
+const SHORT_BOOST = {
+  praise:['整体没毛病','挑不出大毛病','不算惊艳但不踩雷'],
+  mixed:['有好有坏，整体中等','不功不过'],
+  negative:['不太行','这水平说不过去','踩雷了'],
+  ironic:['话就说到这，你们细品']
+};
+const SHORT_CLOSE = {
+  praise:['下次还会点。','会再来。','可以，推荐。'],
+  mixed:['看情况再来。','看个人需求吧。'],
+  negative:['不会再来。','谨慎选择。'],
+  ironic:['反正星我给了。','下次再说。']
+};
+
+function headOf(shop, item){
+  const sw = SCENE[S.cat] || '这次';
+  const who = shop || '';
+  return (who ? who + sw : '今天' + sw) + '，' +
+    (item ? VERB[S.cat] + joinItems(item) + '，' : '');
+}
+function opening(shop, item, tone){
+  const sw = SCENE[S.cat] || '这次';
+  const who = shop || '';
+  const whoB = who || '这家';
+  const head = headOf(shop, item);
+  const bank = {
+    praise:[`${head}整体是满意的。`, `冲着口碑来的${whoB}，没让人失望。`, `${head}属于会想再来的那种。`, `${head}是值得的。`],
+    mixed:[`${head}好坏参半。`, `${head}有些地方想说说。`, `说下${whoB}的真实体验，优缺点都有。`],
+    negative:[`${head}说实话有点失望。`, `${whoB}，这次体验不太行。`, `${head}得说几句不太好听的。`],
+    ironic:[`${whoB}，五星先给上。`, `${whoB}，星是给它的，话我另说。`, `${whoB}，好评我点了，但有几句话得念叨念叨。`]
+  };
+  return pick(bank[tone]);
+}
+function closing(tone){
+  const bank = {
+    praise:['会再来，也推荐给身边的人。','下次还会选这家。','值得，回头客预定。'],
+    mixed:['不算踩雷，但也没到值得专程跑一趟的程度。','有改进空间，愿意再给一次机会。','细节再抓一抓就好了。'],
+    negative:['希望下次能好一点。','这几点要是解决了，体验会差很多。','不太推荐，介意的慎选。'],
+    ironic:['期待下次能把这几点补上，再来给个真五星。','话虽这么说，我还是会再来的。']
+  };
+  return pick(bank[tone]);
+}
+
+function shuffled(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const j = seed % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function alignTone(sents){
+  const neg = sents.filter(s => s.pol === -1).length;
+  const pos = sents.filter(s => s.pol === 1).length;
+  if(sents.length >= 2 && neg > pos && S.tone === 'praise') return 'mixed';
+  if(sents.length >= 2 && pos > neg && S.tone === 'negative') return 'mixed';
+  return S.tone;
+}
+
+function offline(){
+  const c = CATS[S.cat], dims = dimsOf(S.cat);
+  const shop = slotVal(0), item = slotVal(1);
+  const raw = $('#raw').value.trim();
+
+  const lim = {short:2, mid:5, long:99}[S.len];
+  let sents = splitClauses(raw).map(t => ({t, pol:polarityOf(t), dim: matchDim(t, dims)})).slice(0, lim);
+
+  const mentioned = new Set(sents.map(s => s.dim).filter(Boolean));
+  let extras = shuffled(dims
+    .filter(d => S.chips[d.n] && !mentioned.has(d.n))
+    .map(d => S.chips[d.n] > 0 ? d.p : d.q));
+  if(S.len === 'short') extras = extras.slice(0, 2);
+
+  const all = sents.map(s => s.t).concat(extras);
+  if(!all.length){
+    return '先在上面写两句感受，或者点几个标签，我这边才有的写。';
+  }
+
+  const effTone = alignTone(sents);
+
+  const shortish = all.length <= 2 && all.every(s => s.replace(/[，,、\s]+/g,'').length <= 12);
+  let text;
+  if(shortish){
+    let bt = effTone;
+    if(bt === 'praise' && sents.some(s => s.pol === -1)) bt = 'mixed';
+    if(bt === 'negative' && sents.some(s => s.pol === 1)) bt = 'mixed';
+    const evalPart = all.map(s => s.replace(/[。！？，；、\s]+$/,'')).join('，');
+    const boost = pick(SHORT_BOOST[bt]);
+    text = headOf(shop, item) + evalPart + (boost ? '，' + boost : '') + '。' + pick(SHORT_CLOSE[bt]);
+  } else {
+    const ss = all.map(s => s.replace(/[。！？，；、\s]+$/,'') + '。');
+    let body = '';
+    if(S.platform === 'xhs' && ss.length >= 4){
+      for(let i = 0; i < ss.length; i += 2) body += ss.slice(i, i+2).join('') + '\n\n';
+      body = body.trim();
+    } else {
+      body = ss.join('');
+    }
+    text = opening(shop, item, effTone) + body + closing(effTone);
+  }
+
+  if(S.platform === 'xhs'){
+    text = pick(['姐妹们，','不吹不黑，','如实说，','讲真，']) + text + '\n\n' +
+      (shop ? '📍' + shop + '\n' : '') + c.tag;
+  }
+  return text;
+}
+
+function buildPrompt(){
+  const c = CATS[S.cat], dims = dimsOf(S.cat);
+  const chipStr = dims.filter(d => S.chips[d.n])
+    .map(d => d.n + (S.chips[d.n] > 0 ? '（好）' : '（差）')).join('、') || '无';
+  const sys = `你是一位擅长写真实消费评价的中文写手。任务是把用户零散的口语感受，写成一条可以直接发布的中文评价。
+
+硬性要求：
+1. 只使用用户给出的事实，绝不编造菜名、价格、时长、人名、店名等具体信息。
+2. 按这些维度组织：${dims.map(d => d.n).join('、')}。只写用户提到的维度，没提到的不硬凑，不重复凑字数。
+3. 语气：${TONE_DESC[S.tone]}
+4. 文体：${PLAT_DESC[S.platform]}
+5. 篇幅约 ${LEN_N[S.len]} 字。
+6. 禁止「综上所述」「总而言之」「整体来说」这类套话；禁止堆感叹号；禁止营销腔和夸张形容词。
+7. 只输出评价正文。不要标题、不要解释、不要加引号、不要 markdown。`;
+  const usr = `品类：${c.n}
+${c.s}：${slotVal(0) || '未提供'}
+${c.i}：${slotVal(1) || '未提供'}
+用户标记的维度：${chipStr}
+用户原话：${$('#raw').value.trim() || '（未填写，请仅依据标记的维度写，不要编造细节）'}`;
+  return {sys, usr};
+}
+
+function loadCfg(){
+  try{ return JSON.parse(localStorage.getItem('kb_cfg') || '{}'); }catch(e){ return {}; }
+}
+function saveCfg(){
+  const cfg = {
+    url: $('#cfgUrl').value.trim() || 'https://api.deepseek.com/v1',
+    key: $('#cfgKey').value.trim(),
+    model: $('#cfgModel').value.trim() || 'deepseek-chat'
+  };
+  localStorage.setItem('kb_cfg', JSON.stringify(cfg));
+  syncStatus();
+  toast(cfg.key ? '设置已保存，将使用大模型' : '设置已保存');
+}
+
+async function callLLM(p){
+  const cfg = loadCfg();
+  if(!cfg.key) return null;
+  const url = (cfg.url || 'https://api.deepseek.com/v1').replace(/\/+$/,'') + '/chat/completions';
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer ' + cfg.key},
+    body: JSON.stringify({
+      model: cfg.model || 'deepseek-chat',
+      temperature: 0.85,
+      messages: [{role:'system', content:p.sys}, {role:'user', content:p.usr}]
+    })
+  });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const j = await res.json();
+  return (j.choices && j.choices[0] && j.choices[0].message.content || '').trim() || null;
+}
+
+async function generate(){
+  const btn = $('#btnGen');
+  const out = $('#out');
+  const raw = $('#raw').value.trim();
+  const anyChip = Object.keys(S.chips).length > 0;
+  if(!raw && !anyChip && !slotVal(1)){
+    toast('写两句感受，或者点几个标签');
+    return;
+  }
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = '生成中…';
+
+  let text = null, src = '模板引擎';
+  const cfg = loadCfg();
+  if(cfg.key){
+    try{
+      text = await callLLM(buildPrompt());
+      if(text) src = '大模型';
+    }catch(e){
+      toast('大模型没调通（' + e.message + '），已用离线引擎出稿');
+    }
+  }
+  if(!text){ text = offline(); src = '离线模板'; }
+
+  out.textContent = text;
+  renderMeta(src, text);
+  renderQC(runQC(text, raw + ' ' + slotVal(0) + ' ' + slotVal(1)));
+  if(raw.length < 12 && !Object.keys(S.chips).length){
+    toast('信息有点少，多点几个标签或多写半句，会更饱满');
+  }
+  btn.disabled = false;
+  btn.textContent = old;
+}
+
+function renderMeta(src, text){
+  const c = CATS[S.cat];
+  const tname = TONES.find(t => t[0] === S.tone)[1];
+  const pname = PLATS.find(p => p[0] === S.platform)[1];
+  $('#meta').innerHTML = [
+    src, c.n, tname, pname, text.replace(/\s/g,'').length + ' 字'
+  ].map(x => `<span class="tag">${x}</span>`).join('');
+}
+
+function runQC(text, raw){
+  const items = [];
+  const cliche = /(综上所述|总而言之|总的来说|整体来说|不得不说是|在这个快节奏|众所周知)/.test(text);
+  items.push({ok:!cliche, label:cliche ? '出现套话，建议删掉重写' : '无套话填充'});
+  const ex = (text.match(/[！!]/g) || []).length;
+  items.push({ok:ex <= 1, label:ex <= 1 ? '感叹号克制（' + ex + ' 个）' : '感叹号偏多（' + ex + ' 个），像营销号'});
+  const n = text.replace(/\s/g,'').length;
+  items.push({ok:n >= 35 && n <= 520, label:'字数 ' + n + (n < 35 ? '，偏短' : n > 520 ? '，偏长' : '')});
+  const numsOf = t => (t.replace(/4K/g,'').match(/\d+(\.\d+)?/g) || []);
+  const rawNums = new Set(numsOf(raw));
+  const forged = numsOf(text).filter(x => !rawNums.has(x) && !/^0/.test(x));
+  items.push({ok:forged.length === 0,
+    label:forged.length === 0 ? '无编造数字（金额/时长都可溯源）' : '出现原文没有的数字：' + forged.slice(0,3).join('、') + '，有编造嫌疑'});
+  const conflict = S.tone === 'negative' && /推荐|会再来|值得去|回头客/.test(text);
+  items.push({ok:!conflict, label:conflict ? '差评里混进了推荐语，语气打架' : '语气与档位一致'});
+  return items;
+}
+function renderQC(items){
+  $('#qc').innerHTML = items.map(it =>
+    `<div class="qc-item ${it.ok?'ok':'bad'}">${it.ok?'✓':'✗'} ${it.label}</div>`).join('');
+}
+
+function toast(msg){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+async function copyText(t){
+  if(!t) return false;
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try{ ok = document.execCommand('copy'); }catch(_){}
+    ta.remove();
+    return ok;
+  }
+}
+
+function loadHist(){
+  try{ return JSON.parse(localStorage.getItem('kb_hist') || '[]'); }catch(e){ return []; }
+}
+function renderHist(){
+  const h = loadHist();
+  if(!h.length){ $('#hist').innerHTML = '<div class="empty">还没有存过，写完点「存下」</div>'; return; }
+  $('#hist').innerHTML = h.map((it, i) =>
+    `<div class="hist-item" data-i="${i}"><span class="txt">${it.text.replace(/</g,'&lt;')}</span><span class="del" data-del="${i}">×</span></div>`
+  ).join('');
+}
+function saveHist(){
+  const t = $('#out').textContent.trim();
+  if(!t){ toast('还没有成稿'); return; }
+  const h = loadHist();
+  h.unshift({text:t, cat:CATS[S.cat].n, tone:S.tone, time:Date.now()});
+  localStorage.setItem('kb_hist', JSON.stringify(h.slice(0, 40)));
+  renderHist();
+  toast('已存下');
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .chip, .hist-item, .del');
+  if(!t) return;
+
+  if(t.dataset.g){ S.group = t.dataset.g; renderTabs(); renderCats(); return; }
+  if(t.dataset.c){
+    S.cat = t.dataset.c; S.chips = {};
+    renderCats(); renderSlots(); renderChips();
+    $('#out').textContent = ''; $('#meta').innerHTML = ''; $('#qc').innerHTML = '';
+    return;
+  }
+  if(t.id === 'catTabs') return;
+  if(t.dataset.v){
+    const p = t.parentElement.id;
+    if(p === 'tones') S.tone = t.dataset.v;
+    if(p === 'plats') S.platform = t.dataset.v;
+    if(p === 'lens') S.len = t.dataset.v;
+    renderSeg('#' + p, p === 'tones' ? TONES : p === 'plats' ? PLATS : LENS,
+      p === 'tones' ? S.tone : p === 'plats' ? S.platform : S.len);
+    return;
+  }
+  if(t.classList.contains('chip')){
+    const d = t.dataset.d;
+    const cur = S.chips[d];
+    const next = cur === undefined ? 1 : cur === 1 ? -1 : undefined;
+    if(next === undefined) delete S.chips[d]; else S.chips[d] = next;
+    renderChips();
+    return;
+  }
+  if(t.classList.contains('del')){
+    e.stopPropagation();
+    const h = loadHist();
+    h.splice(+t.dataset.del, 1);
+    localStorage.setItem('kb_hist', JSON.stringify(h));
+    renderHist();
+    return;
+  }
+  if(t.classList.contains('hist-item')){
+    const h = loadHist();
+    const it = h[+t.dataset.i];
+    if(it){ $('#out').textContent = it.text; toast('已载入，可以直接改'); }
+    return;
+  }
+});
+
+function download(content, filename, type){
+  const blob = new Blob([content], {type:type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function exportDims(){
+  const rows = [['品类','维度','正面表达','负面表达','关键词']];
+  Object.keys(CATS).forEach(k => {
+    CATS[k].d.forEach(a => rows.push([CATS[k].n, a[0], a[2], a[3], a[1]]));
+  });
+  const csv = '\ufeff' + rows.map(r =>
+    r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')
+  ).join('\r\n');
+  download(csv, '嘴替-维度库.csv', 'text/csv;charset=utf-8');
+  toast('维度库已导出 CSV');
+}
+
+$('#btnGen').addEventListener('click', generate);
+$('#btnAgain').addEventListener('click', () => { seed = Math.floor(Math.random()*99999); generate(); });
+$('#btnSave').addEventListener('click', saveHist);
+$('#btnClear').addEventListener('click', () => {
+  if(confirm('清空所有历史记录？')){ localStorage.removeItem('kb_hist'); renderHist(); }
+});
+$('#btnExport').addEventListener('click', () => {
+  const h = loadHist();
+  if(!h.length){ toast('还没有存过记录'); return; }
+  const txt = h.map(it =>
+    `【${new Date(it.time).toLocaleString()} · ${it.cat}】\n${it.text}`
+  ).join('\n\n----------------\n\n');
+  download('\ufeff' + txt, '嘴替-评价记录.txt', 'text/plain;charset=utf-8');
+  toast('已导出 txt');
+});
+$('#btnDims').addEventListener('click', exportDims);
+$('#out').addEventListener('paste', e => {
+  e.preventDefault();
+  const t = (e.clipboardData || window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, t);
+});
+$('#btnCopy').addEventListener('click', async () => {
+  const ok = await copyText($('#out').textContent.trim());
+  toast(ok ? '已复制，去粘吧' : '复制失败，手动选中吧');
+});
+$('#btnSetting').addEventListener('click', () => $('#setting').classList.toggle('hidden'));
+$('#btnSaveCfg').addEventListener('click', saveCfg);
+$('#btnCopyPrompt').addEventListener('click', async () => {
+  const p = buildPrompt();
+  const ok = await copyText(p.sys + '\n\n---\n\n' + p.usr);
+  toast(ok ? '提示词已复制，去任意 AI 里跑，结果粘回成稿区' : '复制失败');
+});
+$('#raw').addEventListener('input', () => {
+  $('#cnt').textContent = $('#raw').value.trim().length + ' 字';
+});
+
+(function init(){
+  const cfg = loadCfg();
+  $('#cfgUrl').value = cfg.url || 'https://api.deepseek.com/v1';
+  $('#cfgKey').value = cfg.key || '';
+  $('#cfgModel').value = cfg.model || 'deepseek-chat';
+  renderTabs(); renderCats(); renderSlots(); renderChips();
+  renderSeg('#tones', TONES, S.tone, 'tone');
+  renderSeg('#plats', PLATS, S.platform, 'platform');
+  renderSeg('#lens', LENS, S.len, 'len');
+  renderHist(); syncStatus();
+})();
+</script>
+</body>
+</html>
