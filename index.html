@@ -73,6 +73,10 @@ input[type=text],input[type=password]{
 input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
 
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.btn-voice{font-size:11.5px;padding:3px 10px;border-radius:6px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink-2);margin-right:8px}
+.btn-voice:hover{border-color:var(--accent);color:var(--accent)}
+.btn-voice.on{background:var(--bad-soft);border-color:var(--bad-line);color:var(--bad);font-weight:600}
+.voice-tip{font-size:11.5px;color:var(--ink-3);margin-top:6px;display:none}
 .chip{font-size:12.5px;padding:5px 11px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink-2);user-select:none}
 .chip:hover{border-color:var(--ink-3)}
 .chip::after{content:"";margin-left:0}
@@ -215,8 +219,9 @@ textarea::placeholder{color:var(--ink-3);font-size:13px}
             <div class="chips" id="chips"></div>
           </div>
           <div class="field">
-            <div class="lb">原始感受 <span class="hint" id="cnt">0 字</span></div>
+            <div class="lb">原始感受 <span class="hint"><button class="btn-voice" id="btnVoice" style="display:none">语音输入</button><span id="cnt">0 字</span></span></div>
             <textarea id="raw"></textarea>
+            <div class="voice-tip" id="voiceTip"></div>
           </div>
           <button class="btn-main" id="btnGen">生成评价</button>
         </div>
@@ -955,6 +960,55 @@ $('#raw').addEventListener('input', () => {
   $('#cnt').textContent = $('#raw').value.trim().length + ' 字';
 });
 
+let recog = null, listening = false;
+function stopVoice(){
+  listening = false;
+  const b = $('#btnVoice');
+  if(b){ b.textContent = '语音输入'; b.classList.remove('on'); }
+}
+function initSpeech(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = $('#btnVoice'), tip = $('#voiceTip');
+  if(!SR){
+    tip.style.display = 'block';
+    tip.textContent = '当前浏览器不支持网页语音识别。手机上直接用输入法的麦克风键，中文识别比网页版更准。';
+    return;
+  }
+  btn.style.display = 'inline-block';
+  recog = new SR();
+  recog.lang = 'zh-CN';
+  recog.continuous = true;
+  recog.interimResults = false;
+  recog.onresult = e => {
+    let txt = '';
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      if(e.results[i].isFinal) txt += e.results[i][0].transcript;
+    }
+    if(!txt) return;
+    const ta = $('#raw');
+    const cur = ta.value.trim();
+    ta.value = cur ? cur.replace(/[。，,.\s]+$/,'') + '，' + txt : txt;
+    $('#cnt').textContent = ta.value.trim().length + ' 字';
+  };
+  recog.onerror = e => {
+    stopVoice();
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('麦克风权限被拒绝，去浏览器设置里允许一下');
+    else if(e.error === 'network') toast('网页语音服务连不上，改用输入法的麦克风键吧');
+    else if(e.error === 'no-speech') toast('没听到声音，再试一次');
+    else toast('识别没成功，可以直接打字');
+  };
+  recog.onend = stopVoice;
+  btn.addEventListener('click', () => {
+    if(listening){ recog.stop(); return; }
+    try{
+      recog.start();
+      listening = true;
+      btn.textContent = '在听…点停';
+      btn.classList.add('on');
+    }catch(err){ stopVoice(); toast('启动失败，再点一次试试'); }
+  });
+}
+
 (function init(){
   const cfg = loadCfg();
   $('#cfgUrl').value = cfg.url || 'https://api.deepseek.com/v1';
@@ -964,7 +1018,7 @@ $('#raw').addEventListener('input', () => {
   renderSeg('#tones', TONES, S.tone, 'tone');
   renderSeg('#plats', PLATS, S.platform, 'platform');
   renderSeg('#lens', LENS, S.len, 'len');
-  renderHist(); syncStatus();
+  renderHist(); syncStatus(); initSpeech();
 })();
 </script>
 </body>
